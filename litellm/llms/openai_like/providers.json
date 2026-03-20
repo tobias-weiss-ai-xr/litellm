@@ -101,5 +101,45 @@
     "param_mappings": {
       "max_completion_tokens": "max_tokens"
     }
+  },
+  "zai": {
+    "base_url": "https://api.z.ai/api/coding/paas/v4",
+    "api_key_env": "ZAI_API_KEY",
+    "api_base_env": "ZAI_API_BASE",
+    "param_mappings": {
+      "max_completion_tokens": "max_tokens"
+    }
+  },
+  "saiav2": {
+    "base_url": "https://chat-ai.academiccloud.de/v2",
+    "api_key_env": "SAIA_V2_API_KEY",
+    "api_base_env": "SAIA_V2_API_BASE",
+    "param_mappings": {
+      "max_completion_tokens": "max_tokens"
+    }
+  },
+  "saia": {
+    "base_url": "https://chat-ai.academiccloud.de/v1",
+    "api_key_env": "SAIA_API_KEY",
+    "api_base_env": "SAIA_API_BASE",
+    "param_mappings": {
+      "max_completion_tokens": "max_tokens"
+    }
+  },
+  "local_llm": {
+    "base_url": "http://192.168.0.27:8000/v1",
+    "api_key_env": "LOCAL_LLM_API_KEY",
+    "api_base_env": "LOCAL_LLM_API_BASE",
+    "param_mappings": {
+      "max_completion_tokens": "max_tokens"
+    }
+  },
+  "llamacpp": {
+    "base_url": "http://localhost:8080/v1",
+    "api_key_env": "LLAMACPP_API_KEY",
+    "api_base_env": "LLAMACPP_API_BASE",
+    "param_mappings": {
+      "max_completion_tokens": "max_tokens"
+    }
   }
 }
