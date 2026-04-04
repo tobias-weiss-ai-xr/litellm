@@ -78,42 +78,6 @@ model_list:
       trust_level: "trusted"
       supports_sensitivity_detection: true
     
-  # Secondary local model (192.168.0.134 - 122B)
-  - model_name: qwen-122b
-    litellm_params:
-      model: openai/RedHatAI/Qwen3.5-122B-A10B-NVFP4
-      api_base: http://192.168.0.134:8000/v1
-      api_key: "none"
-    model_info:
-      id: "local-secondary"
-      region: "local"
-      sensitive_data_allowed: true
-      trust_level: "trusted"
-    
-  # Local llama.cpp (192.168.0.81 - 9B)
-  - model_name: qwen-9b-remote
-    litellm_params:
-      model: openai/qwen3.5-9b-q4_k_m.gguf
-      api_base: http://192.168.0.81:8080/v1
-      api_key: "none"
-    model_info:
-      id: "local-small"
-      region: "local"
-      sensitive_data_allowed: true
-      trust_level: "trusted"
-    
-  # Local llama.cpp (localhost - 9B)
-  - model_name: qwen-9b-local
-    litellm_params:
-      model: openai/qwen3.5-9b-q4_k_m.gguf
-      api_base: http://localhost:8080/v1
-      api_key: "none"
-    model_info:
-      id: "local-tiny"
-      region: "local"
-      sensitive_data_allowed: true
-      trust_level: "trusted"
-    
   - model_name: qwen-35b-149
     litellm_params:
       model: openai/Qwen_Qwen3.5-35B-A3B-Q4_K_M.gguf
@@ -125,51 +89,17 @@ model_list:
       sensitive_data_allowed: true
       trust_level: "trusted"
     
-  # Ollama models (localhost)
-  - model_name: ollama/glm-4.7-flash
+  - model_name: qwen-9b-local
     litellm_params:
-      model: openai/glm-4.7-flash
-      api_base: http://localhost:11434/v1
+      model: openai/qwen3.5-9b-q4_k_m.gguf
+      api_base: http://localhost:8080/v1
       api_key: "none"
     model_info:
-      id: "ollama-fast"
+      id: "local-tiny"
       region: "local"
       sensitive_data_allowed: true
       trust_level: "trusted"
     
-  - model_name: ollama/glm-4.7-flash-AWQ
-    litellm_params:
-      model: openai/glm-4.7-flash-AWQ
-      api_base: http://localhost:11434/v1
-      api_key: "none"
-    model_info:
-      id: "ollama-quantized"
-      region: "local"
-      sensitive_data_allowed: true
-      trust_level: "trusted"
-    
-  - model_name: ollama/nemotron-3-nano-30b
-    litellm_params:
-      model: openai/nemotron-3-nano:30b
-      api_base: http://localhost:11434/v1
-      api_key: "none"
-    model_info:
-      id: "ollama-nemotron"
-      region: "local"
-      sensitive_data_allowed: true
-      trust_level: "trusted"
-    
-  - model_name: ollama/qwen3-coder
-    litellm_params:
-      model: openai/qwen3-coder:latest
-      api_base: http://localhost:11434/v1
-      api_key: "none"
-    model_info:
-      id: "ollama-coder"
-      region: "local"
-      sensitive_data_allowed: true
-      trust_level: "trusted"
-  
   # ═══════════════════════════════════════════════════════════════════════════
   # EXTERNAL APIs (UNTRUSTED) - NO sensitive data allowed
   # ═══════════════════════════════════════════════════════════════════════════
@@ -252,42 +182,16 @@ model_list:
       sensitive_data_allowed: false
       trust_level: "untrusted"
     
-  # SAIA API (untrusted - requires guardrails)
-  - model_name: saia/mistral-large-3-675b
+  # SAIA API - Open-weight models (untrusted - requires guardrails)
+  # Source: https://docs.hpc.gwdg.de/services/ai-services/chat-ai/models/
+
+  - model_name: saia/apertus-70b-instruct-2509
     litellm_params:
-      model: openai/mistral-large-3-675b-instruct-2512
+      model: openai/Apertus-70B-Instruct-2509-FP8-dynamic
       api_key: os.environ/SAIA_API_KEY
       api_base: https://chat-ai.academiccloud.de/v1
     model_info:
-      id: "saia-primary"
-      region: "external"
-      sensitive_data_allowed: false
-      trust_level: "untrusted"
-      guardrails_required:
-        - prompt_security
-        - pillar_security
-    
-  - model_name: saia/glm-4.7
-    litellm_params:
-      model: openai/glm-4.7
-      api_key: os.environ/SAIA_API_KEY
-      api_base: https://chat-ai.academiccloud.de/v1
-    model_info:
-      id: "saia-latest"
-      region: "external"
-      sensitive_data_allowed: false
-      trust_level: "untrusted"
-      guardrails_required:
-        - prompt_security
-        - pillar_security
-    
-  - model_name: saia/qwen3-235b-a22b
-    litellm_params:
-      model: openai/qwen3-235b-a22b
-      api_key: os.environ/SAIA_API_KEY
-      api_base: https://chat-ai.academiccloud.de/v1
-    model_info:
-      id: "saia-qwen"
+      id: "saia-apertus-70b"
       region: "external"
       sensitive_data_allowed: false
       trust_level: "untrusted"
@@ -295,20 +199,419 @@ model_list:
         - prompt_security
         - pillar_security
 
+  - model_name: saia/deepseek-r1-distill-llama-70b
+    litellm_params:
+      model: openai/DeepSeek-R1-Distill-Llama-70B
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-deepseek-r1-70b"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/devstral-2-123b-instruct-2512
+    litellm_params:
+      model: openai/Devstral-2-123B-Instruct-2512
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-devstral-2"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/gemma-3-27b-instruct
+    litellm_params:
+      model: openai/gemma-3-27b-it
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-gemma-3-27b"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/glm-4.7
+    litellm_params:
+      model: openai/glm-4.7
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-glm-4.7"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/internvl-3.5-30b-a3b
+    litellm_params:
+      model: openai/InternVL3_5-30B-A3B-HF
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-internvl-3.5"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/medgemma-27b-instruct
+    litellm_params:
+      model: openai/medgemma-27b-it
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-medgemma-27b"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/llama-3.1-8b-instruct
+    litellm_params:
+      model: openai/Llama-3.1-8B-Instruct-FP8
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-llama-3.1-8b"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/llama-3.3-70b-instruct
+    litellm_params:
+      model: openai/Llama-3.1-70B-Instruct-FP8
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-llama-3.3-70b"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/mistral-large-3-675b
+    litellm_params:
+      model: openai/Mistral-Large-3-675B-Instruct-2512-NVFP4
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-mistral-large-3"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/gpt-oss-120b
+    litellm_params:
+      model: openai/gpt-oss-120b
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-gpt-oss-120b"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/qwen3-30b-a3b-instruct-2507
+    litellm_params:
+      model: openai/Qwen3-30B-A3B-Instruct-2507-FP8
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-qwen3-30b"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/qwen3-coder-30b-a3b-instruct
+    litellm_params:
+      model: openai/Qwen3-Coder-30B-A3B-Instruct-FP8
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-qwen3-coder-30b"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/qwen3-omni-30b-a3b-instruct
+    litellm_params:
+      model: openai/Qwen3-Omni-30B-A3B-Instruct
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-qwen3-omni-30b"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/qwen3.5-122b-a10b
+    litellm_params:
+      model: openai/Qwen3.5-122B-A10B-GPTQ-Int4
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-qwen3.5-122b"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/qwen3.5-27b
+    litellm_params:
+      model: openai/Qwen3.5-27B-GPTQ-Int4
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-qwen3.5-27b"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/qwen3.5-35b-a3b
+    litellm_params:
+      model: openai/Qwen3.5-35B-A3B-GPTQ-Int4
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-qwen3.5-35b"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/qwen3.5-397b-a17b
+    litellm_params:
+      model: openai/Qwen3.5-397B-A17B-GPTQ-Int4
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-qwen3.5-397b"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  - model_name: saia/teuken-7b-instruct-research
+    litellm_params:
+      model: openai/Teuken-7B-instruct-research-v0.4
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+    model_info:
+      id: "saia-teuken-7b"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+      guardrails_required:
+        - prompt_security
+        - pillar_security
+
+  # SAIA API - External models via /v2 endpoint (untrusted)
+  - model_name: saiav2/claude-opus-4.6
+    litellm_params:
+      model: openai/claude-opus-4.6
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v2
+    model_info:
+      id: "saiav2-claude-opus-4.6"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+
+  - model_name: saiav2/claude-sonnet-4.6
+    litellm_params:
+      model: openai/claude-sonnet-4.6
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v2
+    model_info:
+      id: "saiav2-claude-sonnet-4.6"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+
+  - model_name: saiav2/gpt-5.4
+    litellm_params:
+      model: openai/gpt-5.4
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v2
+    model_info:
+      id: "saiav2-gpt-5.4"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+
+  - model_name: saiav2/gpt-5.4-mini
+    litellm_params:
+      model: openai/gpt-5.4-mini
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v2
+    model_info:
+      id: "saiav2-gpt-5.4-mini"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+
+  - model_name: saiav2/gpt-5.4-nano
+    litellm_params:
+      model: openai/gpt-5.4-nano
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v2
+    model_info:
+      id: "saiav2-gpt-5.4-nano"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+
+  - model_name: saiav2/gpt-5.3-chat
+    litellm_params:
+      model: openai/gpt-5.3-chat
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v2
+    model_info:
+      id: "saiav2-gpt-5.3-chat"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+
+  - model_name: saiav2/gpt-5.2
+    litellm_params:
+      model: openai/gpt-5.2
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v2
+    model_info:
+      id: "saiav2-gpt-5.2"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+
+  - model_name: saiav2/gpt-5.1-chat
+    litellm_params:
+      model: openai/gpt-5.1-chat
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v2
+    model_info:
+      id: "saiav2-gpt-5.1-chat"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+
+  - model_name: saiav2/gpt-5
+    litellm_params:
+      model: openai/gpt-5
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v2
+    model_info:
+      id: "saiav2-gpt-5"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+
+  - model_name: saiav2/gpt-5-mini
+    litellm_params:
+      model: openai/gpt-5-mini
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v2
+    model_info:
+      id: "saiav2-gpt-5-mini"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+
+  - model_name: saiav2/gpt-5-nano
+    litellm_params:
+      model: openai/gpt-5-nano
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v2
+    model_info:
+      id: "saiav2-gpt-5-nano"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+
+  - model_name: saiav2/gpt-4.1
+    litellm_params:
+      model: openai/gpt-4.1
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v2
+    model_info:
+      id: "saiav2-gpt-4.1"
+      region: "external"
+      sensitive_data_allowed: false
+      trust_level: "untrusted"
+
 # ─────────────────────────────────────────────────────────────────────────────
 # ROUTER SETTINGS (Local-First Routing)
 # ─────────────────────────────────────────────────────────────────────────────
 router_settings:
   fallbacks:
-    - {"qwen-397b": ["qwen-122b", "qwen-9b-local"]}
+    - {"qwen-397b": ["qwen-35b-149", "qwen-9b-local"]}
+    - {"qwen-35b-149": ["qwen-9b-local"]}
+    - {"qwen-9b-local": ["qwen-35b-149"]}
+    - {"zai/glm-4.5": ["qwen-397b"]}
+    - {"zai/glm-4.5-air": ["qwen-397b"]}
     - {"zai/glm-4.6": ["qwen-397b"]}
     - {"zai/glm-4.7": ["qwen-397b"]}
-    - {"zai/glm-4.7-flashx": ["qwen-122b"]}
-    - {"zai/glm-4.6V": ["qwen-397b"]}
-    - {"saia/mistral-large-3-675b": ["qwen-397b", "ollama/glm-4.7-flash"]}
-    - {"saia/glm-4.7": ["qwen-397b"]}
-    - {"saia/qwen3-235b-a22b": ["qwen-397b"]}
-    - {"qwen-122b": ["qwen-9b-local"]}
+    - {"zai/glm-5": ["qwen-397b"]}
+    - {"zai/glm-5-turbo": ["qwen-397b"]}
+    - {"zai/glm-5.1": ["qwen-397b"]}
+    - {"saia/mistral-large-3-675b": ["qwen-397b", "zai/glm-4.7"]}
+    - {"saia/glm-4.7": ["qwen-397b", "zai/glm-4.7"]}
+    - {"saia/qwen3.5-397b-a17b": ["qwen-397b", "zai/glm-4.7"]}
+    - {"saia/qwen3.5-122b-a10b": ["qwen-397b", "saia/mistral-large-3-675b"]}
+    - {"saia/qwen3.5-35b-a3b": ["qwen-35b-149", "saia/qwen3.5-122b-a10b"]}
+    - {"saia/qwen3.5-27b": ["qwen-35b-149", "saia/qwen3.5-35b-a3b"]}
+    - {"saia/devstral-2-123b-instruct-2512": ["qwen-397b", "saia/mistral-large-3-675b"]}
+    - {"saia/qwen3-coder-30b-a3b-instruct": ["qwen-397b", "saia/devstral-2-123b-instruct-2512"]}
+    - {"saiav2/claude-opus-4.6": ["qwen-397b", "saia/mistral-large-3-675b"]}
+    - {"saiav2/claude-sonnet-4.6": ["qwen-397b", "saiav2/claude-opus-4.6"]}
+    - {"saiav2/gpt-5.4": ["qwen-397b", "saiav2/claude-opus-4.6"]}
+    - {"saiav2/gpt-5.4-mini": ["saiav2/gpt-5.4", "qwen-397b"]}
+    - {"saiav2/gpt-5.4-nano": ["saiav2/gpt-5.4-mini", "qwen-397b"]}
   
   num_retries: 3
   allowed_fails: 3
