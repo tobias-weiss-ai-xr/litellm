@@ -1,0 +1,104 @@
+# LiteLLM Proxy Config — generated from opencode.json
+# Usage: litellm --config litellm_proxy_config.yaml --port 4000 --host 0.0.0.0
+#
+# Required env vars:
+#   export ZAI_API_KEY="your-zai-key"
+#   export SAIA_API_KEY="your-saia-key"
+
+model_list:
+  # ─── ZAI (Cloud) ───────────────────────────────────────────────
+  - model_name: glm-4.6
+    litellm_params:
+      model: openai/glm-4.6
+      api_key: os.environ/ZAI_API_KEY
+      api_base: https://api.z.ai/api/coding/paas/v4
+
+  - model_name: glm-4.6V
+    litellm_params:
+      model: openai/glm-4.6V
+      api_key: os.environ/ZAI_API_KEY
+      api_base: https://api.z.ai/api/coding/paas/v4
+
+  - model_name: glm-4.7
+    litellm_params:
+      model: openai/glm-4.7
+      api_key: os.environ/ZAI_API_KEY
+      api_base: https://api.z.ai/api/coding/paas/v4
+
+  - model_name: glm-4.7-flashx
+    litellm_params:
+      model: openai/glm-4.7-flashx
+      api_key: os.environ/ZAI_API_KEY
+      api_base: https://api.z.ai/api/coding/paas/v4
+
+  # ─── SAIA AI (Cloud) ──────────────────────────────────────────
+  - model_name: saia/mistral-large-3-675b
+    litellm_params:
+      model: openai/mistral-large-3-675b-instruct-2512
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  - model_name: saia/glm-4.7
+    litellm_params:
+      model: openai/glm-4.7
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  - model_name: saia/qwen3-235b-a22b
+    litellm_params:
+      model: openai/qwen3-235b-a22b
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  # ─── Ollama (Local) ───────────────────────────────────────────
+  - model_name: ollama/glm-4.7-flash
+    litellm_params:
+      model: openai/glm-4.7-flash
+      api_key: none
+      api_base: http://localhost:11434/v1
+
+  - model_name: ollama/glm-4.7-flash-AWQ
+    litellm_params:
+      model: openai/glm-4.7-flash-AWQ
+      api_key: none
+      api_base: http://localhost:11434/v1
+
+  - model_name: ollama/nemotron-3-nano-30b
+    litellm_params:
+      model: openai/nemotron-3-nano:30b
+      api_key: none
+      api_base: http://localhost:11434/v1
+
+  - model_name: ollama/qwen3-coder
+    litellm_params:
+      model: openai/qwen3-coder:latest
+      api_key: none
+      api_base: http://localhost:11434/v1
+
+  # ─── Local vLLM (192.168.0.134) ───────────────────────────────
+  - model_name: local/qwen3.5-122b
+    litellm_params:
+      model: openai/RedHatAI/Qwen3.5-122B-A10B-NVFP4
+      api_key: none
+      api_base: http://192.168.0.134:8000/v1
+
+  # ─── Hybrid LLM (192.168.0.27) ────────────────────────────────
+  - model_name: hybrid
+    litellm_params:
+      model: openai/hybrid
+      api_key: none
+      api_base: http://192.168.0.27:8000/v1
+
+  # ─── Local llama.cpp (localhost) ──────────────────────────────
+  - model_name: local/qwen3.5-9b
+    litellm_params:
+      model: openai/qwen3.5-9b-q4_k_m.gguf
+      api_key: none
+      api_base: http://localhost:8080/v1
+
+  # ─── Remote llama.cpp (192.168.0.81) ─────────────────────────
+  - model_name: remote/qwen3.5-9b
+    litellm_params:
+      model: openai/qwen3.5-9b-q4_k_m.gguf
+      api_key: none
+      api_base: http://192.168.0.81:8080/v1
