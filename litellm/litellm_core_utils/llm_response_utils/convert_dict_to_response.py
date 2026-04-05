@@ -350,10 +350,9 @@ class LiteLLMResponseObjectHandler:
             model_response_object = ImageResponse(**response_object)
             return model_response_object
         else:
-            model_response_dict = model_response_object.model_dump()
-
-            model_response_dict.update(response_object)
-            model_response_object = ImageResponse(**model_response_dict)
+            model_response_object = model_response_object.model_copy(
+                update=response_object
+            )
             return model_response_object
 
     @staticmethod

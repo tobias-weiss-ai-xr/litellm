@@ -671,14 +671,9 @@ class CustomStreamWrapper:
             # pop model keyword
             chunk.pop("model", None)
 
-        chunk_dict = {}
-        for key, value in chunk.items():
-            if key != "stream":
-                chunk_dict[key] = value
-
         args = {
             "model": _model,
-            **chunk_dict,
+            **{k: v for k, v in chunk.items() if k != "stream"},
         }
 
         model_response = ModelResponseStream(**args)
@@ -821,12 +816,8 @@ class CustomStreamWrapper:
         if self.sent_first_chunk is False:
             model_response.choices[0].delta["role"] = "assistant"
             self.sent_first_chunk = True
-        elif self.sent_first_chunk is True and hasattr(
-            model_response.choices[0].delta, "role"
-        ):
-            _initial_delta = model_response.choices[0].delta.model_dump()
-
-            _initial_delta.pop("role", None)
+        elif self.sent_first_chunk is True and hasattr(model_response.choices[0].delta, "role"):
+            _initial_delta = model_response.choices[0].delta.model_dump(exclude={"role"})
             model_response.choices[0].delta = Delta(**_initial_delta)
         return model_response
 
@@ -939,10 +930,7 @@ class CustomStreamWrapper:
                         for choice in original_chunk.choices:
                             try:
                                 if isinstance(choice, BaseModel):
-                                    choice_json = choice.model_dump()  # type: ignore
-                                    choice_json.pop(
-                                        "finish_reason", None
-                                    )  # for mistral etc. which return a value in their last chunk (not-openai compatible).
+                                    choice_json = choice.model_dump(exclude={"finish_reason"})  # type: ignore
                                     choices.append(StreamingChoices(**choice_json))
                             except Exception:
                                 choices.append(StreamingChoices())
@@ -1825,7 +1813,7 @@ class CustomStreamWrapper:
                             completion_start_time=datetime.datetime.now()
                         )
                     ## LOGGING
-                    if not litellm.disable_streaming_logging:
+                    if not litellm.disable_streaming_logging and not self.logging_obj.model_call_details.get("has_logged_sync_success", False):
                         executor.submit(
                             self.run_success_logging_and_cache_storage,
                             response,

@@ -1280,22 +1280,17 @@ class Delta(SafeAttributeModel, OpenAIObject):
         self.function_call: Optional[Union[FunctionCall, Any]] = None
         self.tool_calls: Optional[List[Union[ChatCompletionDeltaToolCall, Any]]] = None
         self.audio: Optional[ChatCompletionAudioResponse] = None
-        self.images: Optional[List[ImageURLListItem]] = None
-        self.annotations: Optional[List[ChatCompletionAnnotation]] = None
 
         if reasoning_content is not None:
             self.reasoning_content = reasoning_content
         else:
-            # ensure default response matches OpenAI spec
             del self.reasoning_content
 
         if thinking_blocks is not None:
             self.thinking_blocks = thinking_blocks
         else:
-            # ensure default response matches OpenAI spec
             del self.thinking_blocks
 
-        # Add annotations to the delta, ensure they are only on Delta if they exist (Match OpenAI spec)
         if annotations is not None:
             self.annotations = annotations
         else:
