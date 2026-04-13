@@ -13,9 +13,7 @@ from litellm.proxy._types import *
 from litellm.types.router import CONFIGURABLE_CLIENTSIDE_AUTH_PARAMS
 
 
-def _get_request_ip_address(
-    request: Request, use_x_forwarded_for: Optional[bool] = False
-) -> Optional[str]:
+def _get_request_ip_address(request: Request, use_x_forwarded_for: Optional[bool] = False) -> Optional[str]:
     client_ip = None
     if use_x_forwarded_for is True and "x-forwarded-for" in request.headers:
         client_ip = request.headers["x-forwarded-for"]
@@ -39,9 +37,7 @@ def _check_valid_ip(
         return True, None
 
     # if general_settings.get("use_x_forwarded_for") is True then use x-forwarded-for
-    client_ip = _get_request_ip_address(
-        request=request, use_x_forwarded_for=use_x_forwarded_for
-    )
+    client_ip = _get_request_ip_address(request=request, use_x_forwarded_for=use_x_forwarded_for)
 
     # Check if IP address is allowed
     if client_ip not in allowed_ips:
@@ -124,9 +120,7 @@ def _allow_model_level_clientside_configurable_parameters(
     if model_info is None:
         # check if wildcard model is set
         if model.split("/", 1)[0] in provider_list:
-            model_info = llm_router.get_model_group_info(
-                model_group=model.split("/", 1)[0]
-            )
+            model_info = llm_router.get_model_group_info(model_group=model.split("/", 1)[0])
 
     if model_info is None:
         return False
@@ -141,9 +135,7 @@ def _allow_model_level_clientside_configurable_parameters(
     )
 
 
-def is_request_body_safe(
-    request_body: dict, general_settings: dict, llm_router: Optional[Router], model: str
-) -> bool:
+def is_request_body_safe(request_body: dict, general_settings: dict, llm_router: Optional[Router], model: str) -> bool:
     """
     Check if the request body is safe.
 
@@ -153,11 +145,8 @@ def is_request_body_safe(
     banned_params = ["api_base", "base_url"]
 
     for param in banned_params:
-        if (
-            param in request_body
-            and not check_complete_credentials(  # allow client-credentials to be passed to proxy
-                request_body=request_body
-            )
+        if param in request_body and not check_complete_credentials(  # allow client-credentials to be passed to proxy
+            request_body=request_body
         ):
             if general_settings.get("allow_client_side_credentials") is True:
                 return True
@@ -207,9 +196,7 @@ async def pre_db_read_auth_checks(
         request_body=request_data,
         general_settings=general_settings,
         llm_router=llm_router,
-        model=request_data.get(
-            "model", ""
-        ),  # [TODO] use model passed in url as well (azure openai routes)
+        model=request_data.get("model", ""),  # [TODO] use model passed in url as well (azure openai routes)
     )
 
     # Check 3. Check if IP address is allowed
@@ -233,9 +220,7 @@ async def pre_db_read_auth_checks(
                 f"Trying to set allowed_routes. This is an Enterprise feature. {CommonProxyErrors.not_premium_user.value}"
             )
         if route not in _allowed_routes:
-            verbose_proxy_logger.error(
-                f"Route {route} not in allowed_routes={_allowed_routes}"
-            )
+            verbose_proxy_logger.error(f"Route {route} not in allowed_routes={_allowed_routes}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Access forbidden: Route {route} not allowed",
@@ -280,9 +265,7 @@ def route_in_additonal_public_routes(current_route: str):
 
         # Check wildcard patterns
         for route_pattern in routes_defined:
-            if RouteChecks._route_matches_wildcard_pattern(
-                route=current_route, pattern=route_pattern
-            ):
+            if RouteChecks._route_matches_wildcard_pattern(route=current_route, pattern=route_pattern):
                 return True
 
         return False
@@ -298,9 +281,7 @@ def get_request_route(request: Request) -> str:
     remove base url from path if set e.g. `/genai/chat/completions` -> `/chat/completions
     """
     try:
-        if hasattr(request, "base_url") and request.url.path.startswith(
-            request.base_url.path
-        ):
+        if hasattr(request, "base_url") and request.url.path.startswith(request.base_url.path):
             # remove base_url from path
             return request.url.path[len(request.base_url.path) - 1 :]
         else:
@@ -429,7 +410,7 @@ def normalize_request_route(route: str) -> str:
 
 async def check_if_request_size_is_safe(request: Request) -> bool:
     """
-    Enterprise Only:
+    Custom implementation (tobias-weiss-ai-xr fork):
         - Checks if the request size is within the limit
 
     Args:
@@ -442,27 +423,18 @@ async def check_if_request_size_is_safe(request: Request) -> bool:
         ProxyException: If the request size is too large
 
     """
-    from litellm.proxy.proxy_server import general_settings, premium_user
+    from litellm.proxy.proxy_server import general_settings
 
     max_request_size_mb = general_settings.get("max_request_size_mb", None)
 
     if max_request_size_mb is not None:
-        # Check if premium user
-        if premium_user is not True:
-            verbose_proxy_logger.warning(
-                f"using max_request_size_mb - not checking -  this is an enterprise only feature. {CommonProxyErrors.not_premium_user.value}"
-            )
-            return True
-
         # Get the request body
         content_length = request.headers.get("content-length")
 
         if content_length:
             header_size = int(content_length)
             header_size_mb = bytes_to_mb(bytes_value=header_size)
-            verbose_proxy_logger.debug(
-                f"content_length request size in MB={header_size_mb}"
-            )
+            verbose_proxy_logger.debug(f"content_length request size in MB={header_size_mb}")
 
             if header_size_mb > max_request_size_mb:
                 raise ProxyException(
@@ -477,9 +449,7 @@ async def check_if_request_size_is_safe(request: Request) -> bool:
             body_size = len(body)
             request_size_mb = bytes_to_mb(bytes_value=body_size)
 
-            verbose_proxy_logger.debug(
-                f"request body request size in MB={request_size_mb}"
-            )
+            verbose_proxy_logger.debug(f"request body request size in MB={request_size_mb}")
             if request_size_mb > max_request_size_mb:
                 raise ProxyException(
                     message=f"Request size is too large. Request size is {request_size_mb} MB. Max size is {max_request_size_mb} MB",
@@ -493,7 +463,7 @@ async def check_if_request_size_is_safe(request: Request) -> bool:
 
 async def check_response_size_is_safe(response: Any) -> bool:
     """
-    Enterprise Only:
+    Custom implementation (tobias-weiss-ai-xr fork):
         - Checks if the response size is within the limit
 
     Args:
@@ -507,17 +477,10 @@ async def check_response_size_is_safe(response: Any) -> bool:
 
     """
 
-    from litellm.proxy.proxy_server import general_settings, premium_user
+    from litellm.proxy.proxy_server import general_settings
 
     max_response_size_mb = general_settings.get("max_response_size_mb", None)
     if max_response_size_mb is not None:
-        # Check if premium user
-        if premium_user is not True:
-            verbose_proxy_logger.warning(
-                f"using max_response_size_mb - not checking -  this is an enterprise only feature. {CommonProxyErrors.not_premium_user.value}"
-            )
-            return True
-
         response_size_mb = bytes_to_mb(bytes_value=sys.getsizeof(response))
         verbose_proxy_logger.debug(f"response size in MB={response_size_mb}")
         if response_size_mb > max_response_size_mb:
@@ -653,11 +616,7 @@ def _has_user_setup_sso():
     google_client_id = os.getenv("GOOGLE_CLIENT_ID", None)
     generic_client_id = os.getenv("GENERIC_CLIENT_ID", None)
 
-    sso_setup = (
-        (microsoft_client_id is not None)
-        or (google_client_id is not None)
-        or (generic_client_id is not None)
-    )
+    sso_setup = (microsoft_client_id is not None) or (google_client_id is not None) or (generic_client_id is not None)
 
     return sso_setup
 
@@ -711,17 +670,13 @@ def _get_customer_id_from_standard_headers(
     return None
 
 
-def get_end_user_id_from_request_body(
-    request_body: dict, request_headers: Optional[dict] = None
-) -> Optional[str]:
+def get_end_user_id_from_request_body(request_body: dict, request_headers: Optional[dict] = None) -> Optional[str]:
     # Import general_settings here to avoid potential circular import issues at module level
     # and to ensure it's fetched at runtime.
     from litellm.proxy.proxy_server import general_settings
 
     # Check 1: Standard customer ID headers (always checked, no configuration required)
-    customer_id = _get_customer_id_from_standard_headers(
-        request_headers=request_headers
-    )
+    customer_id = _get_customer_id_from_standard_headers(request_headers=request_headers)
     if customer_id is not None:
         return customer_id
 
@@ -734,9 +689,7 @@ def get_end_user_id_from_request_body(
         # Prefer user mappings (new behavior)
         user_id_mapping = general_settings.get("user_header_mappings", None)
         if user_id_mapping:
-            custom_header_name_to_check = get_customer_user_header_from_mapping(
-                user_id_mapping
-            )
+            custom_header_name_to_check = get_customer_user_header_from_mapping(user_id_mapping)
 
         # Fallback to deprecated user_header_name if mapping did not specify
         if not custom_header_name_to_check:
@@ -793,9 +746,7 @@ def get_end_user_id_from_request_body(
     return None
 
 
-def get_model_from_request(
-    request_data: dict, route: str
-) -> Optional[Union[str, List[str]]]:
+def get_model_from_request(request_data: dict, route: str) -> Optional[Union[str, List[str]]]:
     # First try to get model from request_data
     model = request_data.get("model") or request_data.get("target_model_names")
 
