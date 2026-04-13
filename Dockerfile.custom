@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ libffi-dev curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY . .
+RUN pip install --no-cache-dir -e ".[proxy]" && \
+    pip install --no-cache-dir prisma==0.11.0
+
+# Generate Prisma client (required for database operations)
+RUN cd /app && python3 -m prisma generate --schema litellm/proxy/schema.prisma
+
+EXPOSE 4000
+
+ENTRYPOINT ["litellm"]
+CMD ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "4"]
