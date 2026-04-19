@@ -264,8 +264,9 @@ model_list:
   #     max_input_tokens: 262144
   #     max_output_tokens: 65536
 
-  # gemma-4-26b-nvfp4 via vLLM on ai1 + ai2 + Windows llama.cpp (load-balanced, failover)
-  # NOTE: vLLM backends don't support tool calling — disables to prevent cooldown cascades
+  # gemma-4-26b-nvfp4 via vLLM on ai1 + Windows llama.cpp (load-balanced, failover)
+  # NOTE: ai2 (192.168.0.176) now runs Qwen3.6-35B-A3B-FP8 (see qwen3.6-35b-a3b below)
+  # vLLM backends don't support tool calling — disables to prevent cooldown cascades
   - model_name: gemma-4-26b-nvfp4
     litellm_params:
       model: openai/gemma-4-26b
@@ -280,19 +281,6 @@ model_list:
       supports_reasoning: false
   - model_name: gemma-4-26b-nvfp4
     litellm_params:
-      model: openai/gemma-4-26b
-      api_key: not-needed
-      api_base: http://192.168.0.176:8000/v1
-      litellm_model_id: gemma-4-26b
-      timeout: 300
-      stream_timeout: 600
-    model_info:
-      max_input_tokens: 262000
-      supports_tool_calling: false
-      supports_reasoning: false
-
-  - model_name: gemma-4-26b-nvfp4
-    litellm_params:
       model: openai/google_gemma-4-26B-A4B-it-Q4_K_M.gguf
       api_key: not-needed
       api_base: http://host.docker.internal:8080/v1
@@ -300,6 +288,20 @@ model_list:
       stream_timeout: 60
       drop_params: true
     model_info:
+      supports_tool_calling: false
+      supports_reasoning: false
+
+  # Qwen3.6-35B-A3B-FP8 via SGLang on ai2 (replaced gemma-4-26b on this server)
+  - model_name: qwen3.6-35b-a3b
+    litellm_params:
+      model: openai/qwen3.6-35b-a3b-fp8
+      api_key: not-needed
+      api_base: http://192.168.0.176:8000/v1
+      timeout: 300
+      stream_timeout: 600
+    model_info:
+      max_input_tokens: 262144
+      max_output_tokens: 65536
       supports_tool_calling: false
       supports_reasoning: false
 
@@ -317,6 +319,33 @@ model_list:
       supports_reasoning: false
       max_input_tokens: 32768
 
+  # ── Round-robin: ai1 (gemma-4-26b) + ai2 (qwen3.6-35b) ─────────
+  # Same model_name on multiple entries = LiteLLM router load-balances
+  - model_name: local-ai
+    litellm_params:
+      model: openai/gemma-4-26b
+      api_key: not-needed
+      api_base: http://192.168.0.27:8000/v1
+      litellm_model_id: gemma-4-26b
+      timeout: 300
+      stream_timeout: 600
+    model_info:
+      max_input_tokens: 65536
+      supports_tool_calling: false
+      supports_reasoning: false
+  - model_name: local-ai
+    litellm_params:
+      model: openai/qwen3.6-35b-a3b-fp8
+      api_key: not-needed
+      api_base: http://192.168.0.176:8000/v1
+      timeout: 300
+      stream_timeout: 600
+    model_info:
+      max_input_tokens: 262144
+      max_output_tokens: 65536
+      supports_tool_calling: false
+      supports_reasoning: false
+
   # qwen3.5-9b for explore agent (fast contextual grep via SAIA)
   - model_name: qwen3.5-9b
     litellm_params:
@@ -332,37 +361,37 @@ general_settings:
 router_settings:
   enable_pre_call_checks: false
   fallbacks:
-    # ── Local gemma-4-26b-nvfp4 → free cloud ─────────────────────
-    - gemma-4-26b-nvfp4: [groq/llama-3.3-70b-versatile, glm-5-turbo]
-    # ── GLM (Z.ai) → local first, then free cloud ────────────────
-    - glm-5-turbo: [gemma-4-26b-nvfp4, groq/llama-3.3-70b-versatile]
-    - glm-5: [glm-5-turbo, gemma-4-26b-nvfp4]
-    - glm-5.1: [glm-5-turbo, gemma-4-26b-nvfp4]
-    - glm-4.7: [glm-5-turbo, gemma-4-26b-nvfp4]
-    # ── SAIA models → local first ────────────────────────────────
-    - saia/qwen3.5-397b-a17b: [gemma-4-26b-nvfp4, glm-5-turbo]
-    - saia/mistral-large-3-675b: [gemma-4-26b-nvfp4, groq/llama-3.3-70b-versatile]
-    - saia/qwen3.5-122b-a10b: [gemma-4-26b-nvfp4, groq/llama-3.3-70b-versatile]
-    - saia/qwen3.5-35b-a3b: [gemma-4-26b-nvfp4, groq/gemma2-9b-it]
-    - saia/devstral-2-123b-instruct-2512: [gemma-4-26b-nvfp4, groq/llama-3.3-70b-versatile]
-    - saia/glm-4.7: [gemma-4-26b-nvfp4, glm-5-turbo]
-    - saia/gpt-oss-120b: [gemma-4-26b-nvfp4, glm-5-turbo]
-    - saia/qwen3.5-9b: [gemma-4-26b-nvfp4, groq/gemma2-9b-it]
-    # ── OpenRouter (free models) ────────────────────────────────
-    - openrouter/llama-4-maverick: [gemma-4-26b-nvfp4, groq/llama-3.3-70b-versatile]
-    - openrouter/deepseek-r1: [gemma-4-26b-nvfp4]
-    - openrouter/gemini-2.0-flash: [gemma-4-26b-nvfp4]
-    - openrouter/qwen-2.5-72b: [gemma-4-26b-nvfp4, groq/llama-3.3-70b-versatile]
-    # ── Local large model → gemma-4-26b-nvfp4 (smaller but fast) ─
-    - qwen3.5-397b: [gemma-4-26b-nvfp4, saia/qwen3.5-397b-a17b]
-    # ── Groq (free tier, rate-limited) → local first ───────────────
-    - groq/llama-3.3-70b-versatile: [gemma-4-26b-nvfp4, glm-5-turbo]
-    - groq/gemma2-9b-it: [glm-5-turbo, groq/llama-3.3-70b-versatile]
-    - groq/mixtral-8x7b-32768: [glm-5-turbo, groq/llama-3.3-70b-versatile]
-    # ── Explore agent model → local fallback ──────────────────────
-    - qwen3.5-9b: [gemma-4-26b-nvfp4, groq/gemma2-9b-it]
-    # ── Local small model → local fallback ────────────────────────
-    - gemma-4-e2b: [gemma-4-26b-nvfp4, groq/gemma2-9b-it]
+    # ── Local gemma-4-26b-nvfp4 → qwen3.6 → free cloud ────────────
+    - gemma-4-26b-nvfp4: [qwen3.6-35b-a3b, groq/llama-3.3-70b-versatile, glm-5-turbo]
+    # ── GLM (Z.ai) → qwen3.6 first, then local, then free cloud ──
+    - glm-5-turbo: [qwen3.6-35b-a3b, gemma-4-26b-nvfp4, groq/llama-3.3-70b-versatile]
+    - glm-5: [glm-5-turbo, qwen3.6-35b-a3b, gemma-4-26b-nvfp4]
+    - glm-5.1: [glm-5-turbo, qwen3.6-35b-a3b, gemma-4-26b-nvfp4]
+    - glm-4.7: [glm-5-turbo, qwen3.6-35b-a3b, gemma-4-26b-nvfp4]
+    # ── SAIA models → qwen3.6 first ──────────────────────────────
+    - saia/qwen3.5-397b-a17b: [qwen3.6-35b-a3b, gemma-4-26b-nvfp4, glm-5-turbo]
+    - saia/mistral-large-3-675b: [qwen3.6-35b-a3b, gemma-4-26b-nvfp4, groq/llama-3.3-70b-versatile]
+    - saia/qwen3.5-122b-a10b: [qwen3.6-35b-a3b, gemma-4-26b-nvfp4, groq/llama-3.3-70b-versatile]
+    - saia/qwen3.5-35b-a3b: [qwen3.6-35b-a3b, gemma-4-26b-nvfp4, groq/gemma2-9b-it]
+    - saia/devstral-2-123b-instruct-2512: [qwen3.6-35b-a3b, gemma-4-26b-nvfp4, groq/llama-3.3-70b-versatile]
+    - saia/glm-4.7: [qwen3.6-35b-a3b, gemma-4-26b-nvfp4, glm-5-turbo]
+    - saia/gpt-oss-120b: [qwen3.6-35b-a3b, gemma-4-26b-nvfp4, glm-5-turbo]
+    - saia/qwen3.5-9b: [qwen3.6-35b-a3b, gemma-4-26b-nvfp4, groq/gemma2-9b-it]
+    # ── OpenRouter (free models) → qwen3.6 ───────────────────────
+    - openrouter/llama-4-maverick: [qwen3.6-35b-a3b, gemma-4-26b-nvfp4, groq/llama-3.3-70b-versatile]
+    - openrouter/deepseek-r1: [qwen3.6-35b-a3b, gemma-4-26b-nvfp4]
+    - openrouter/gemini-2.0-flash: [qwen3.6-35b-a3b, gemma-4-26b-nvfp4]
+    - openrouter/qwen-2.5-72b: [qwen3.6-35b-a3b, gemma-4-26b-nvfp4, groq/llama-3.3-70b-versatile]
+    # ── Groq (free tier) → qwen3.6 first ─────────────────────────
+    - groq/llama-3.3-70b-versatile: [qwen3.6-35b-a3b, gemma-4-26b-nvfp4, glm-5-turbo]
+    - groq/gemma2-9b-it: [glm-5-turbo, qwen3.6-35b-a3b]
+    - groq/mixtral-8x7b-32768: [glm-5-turbo, qwen3.6-35b-a3b]
+    # ── qwen3.6 fallback → gemma → free cloud ─────────────────────
+    - qwen3.6-35b-a3b: [gemma-4-26b-nvfp4, groq/llama-3.3-70b-versatile]
+    # ── Explore agent model → qwen3.6 fallback ───────────────────
+    - qwen3.5-9b: [qwen3.6-35b-a3b, groq/gemma2-9b-it]
+    # ── Local small model → qwen3.6 fallback ──────────────────────
+    - gemma-4-e2b: [qwen3.6-35b-a3b, groq/gemma2-9b-it]
   num_retries: 2
   retry_after: 5
   allowed_fails: 2
