@@ -8,7 +8,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY . .
 RUN pip install --no-cache-dir -e ".[proxy]" && \
-    pip install --no-cache-dir prisma==0.11.0
+    pip install --no-cache-dir prisma==0.11.0 && \
+    pip install --no-cache-dir gunicorn
 
 # Generate Prisma client (required for database operations)
 RUN cd /app && python3 -m prisma generate --schema litellm/proxy/schema.prisma
@@ -16,4 +17,4 @@ RUN cd /app && python3 -m prisma generate --schema litellm/proxy/schema.prisma
 EXPOSE 4000
 
 ENTRYPOINT ["litellm"]
-CMD ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "4"]
+CMD ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "2", "--gunicorn"]

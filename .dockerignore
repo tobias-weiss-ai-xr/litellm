@@ -1,15 +1,31 @@
-docs
-cookbook
-.circleci
-.github
-tests
+# Version control
 .git
-.devcontainer
-*.tgz
-log.txt
-docker/Dockerfile.*
+.gitignore
 
-# Claude Flow generated files (must be excluded from Docker build)
+# Tests
+tests/
+cookbook/
+.pytest_cache/
+coverage/
+htmlcov/
+
+# Documentation
+docs/
+*.md
+LICENSE
+
+# UI (not needed in proxy image)
+ui/
+
+# Enterprise
+enterprise/
+
+# CI/CD
+.circleci/
+.github/
+.devcontainer/
+
+# Claude Flow artifacts
 .claude/
 .claude-flow/
 .swarm/
@@ -20,35 +36,56 @@ claude-flow
 .mcp.json
 hive-mind-prompt-*.txt
 
-# Python virtual environments and version managers
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python artifacts
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+dist/
+build/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
 .venv/
 venv/
 **/.venv/
 **/venv/
 .python-version
 .pyenv/
-__pycache__/
-**/__pycache__/
-*.pyc
-.mypy_cache/
-.pytest_cache/
-.ruff_cache/
-**/pyvenv.cfg
-
-# Common project exclusions
-.vscode
-*.pyo
-*.pyd
-.Python
 env/
-.pytest_cache
-.coverage
-htmlcov/
-dist/
-build/
-*.egg-info/
-.DS_Store
-**/node_modules
-*.log
+
+# Docker artifacts (prevent recursion)
+docker/
+Dockerfile*
+docker-compose*.yaml
+.dockerignore
+
+# Dashboard (mounted separately)
+dashboard/
+
+# Environment / secrets
 .env
 .env.local
+.env.*
+
+# Misc
+.sisyphus/
+AGENTS.md
+CLAUDE.md
+backups/
+*.log
+*.tgz
+log.txt
+.DS_Store
+**/node_modules
