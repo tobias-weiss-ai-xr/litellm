@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LiteLLM Dashboard</title>
+<style>
+  :root {
+    --bg:#0f1117; --card:#1a1d27; --border:#2a2d3a; --text:#e1e4ed;
+    --dim:#6b7280; --green:#34d399; --red:#f87171; --yellow:#fbbf24;
+    --blue:#60a5fa; --purple:#a78bfa; --cyan:#22d3ee;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:40px;}
+
+  .header{padding:20px 32px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .header h1{font-size:20px;font-weight:600;}
+  .header h1 .pulse{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:8px;animation:pulse 2s infinite;}
+  .header h1 .pulse.ok{background:var(--green);}
+  .header h1 .pulse.err{background:var(--red);animation:none;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  .meta{font-size:12px;color:var(--dim);}
+  .meta span{margin-left:16px;}
+
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:24px 32px 0;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;}
+  .stat-card .label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+  .stat-card .value{font-size:26px;font-weight:700;}
+  .stat-card .sub{font-size:11px;color:var(--dim);margin-top:4px;}
+
+  .section{padding:24px 32px 0;}
+  .section h2{font-size:13px;font-weight:600;margin-bottom:12px;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px;}
+  .section h2 .badge{background:var(--border);padding:2px 8px;border-radius:4px;font-size:11px;margin-left:8px;}
+
+  /* Spend by model chart */
+  .chart-container{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;}
+  .bar-row{display:flex;align-items:center;padding:5px 0;gap:10px;}
+  .bar-rank{width:20px;font-size:11px;color:var(--dim);text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums;}
+  .bar-label{width:200px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;flex-shrink:0;}
+  .bar-track{flex:1;height:22px;background:var(--border);border-radius:4px;overflow:hidden;position:relative;}
+  .bar-fill{height:100%;border-radius:4px;transition:width 0.6s;display:flex;align-items:center;justify-content:flex-end;padding:0 8px;font-size:11px;font-weight:600;color:var(--bg);min-width:fit-content;white-space:nowrap;}
+  .bar-fill.c-blue{background:var(--blue);}
+  .bar-fill.c-green{background:var(--green);}
+  .bar-fill.c-purple{background:var(--purple);}
+  .bar-fill.c-yellow{background:var(--yellow);}
+  .bar-fill.c-cyan{background:var(--cyan);}
+  .bar-fill.c-dim{background:#4b5563;}
+  .bar-meta{font-size:11px;width:120px;text-align:right;flex-shrink:0;color:var(--dim);font-variant-numeric:tabular-nums;}
+  .bar-latency{font-size:10px;padding:1px 5px;border-radius:3px;font-weight:600;margin-left:4px;}
+  .bar-latency.fast{background:#1e3a2f;color:var(--green);}
+  .bar-latency.medium{background:#3a3a1e;color:var(--yellow);}
+  .bar-latency.slow{background:#3a1e1e;color:var(--red);}
+
+  /* Host / container cards */
+  .host-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;}
+  .host-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;}
+  .host-card h3{font-size:13px;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .host-card h3 .dot{width:6px;height:6px;border-radius:50%;}
+  .host-card h3 .dot.running{background:var(--green);}
+  .host-card h3 .dot.exited{background:var(--red);}
+  .mr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);}
+  .mr:last-child{border-bottom:none;}
+  .mr .l{font-size:12px;color:var(--dim);}
+  .mr .v{font-size:12px;font-weight:600;}
+  .bar-sm{width:80px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:8px;}
+  .bar-sm .fill{height:100%;border-radius:3px;}
+  .fill.g{background:var(--green);} .fill.y{background:var(--yellow);} .fill.r{background:var(--red);}
+
+  /* Cache info */
+  .cache-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+  .cache-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center;}
+  .cache-card .cl{font-size:11px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;}
+  .cache-card .cv{font-size:16px;font-weight:700;}
+
+  /* Model grid */
+  .model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;}
+  .model-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px;}
+  .model-card:hover{border-color:var(--blue);}
+  .mi{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+  .mi.local{background:#1e3a2f;color:var(--green);}
+  .mi.zai{background:#1e2d4a;color:var(--blue);}
+  .mi.saia{background:#2d1e4a;color:var(--purple);}
+  .model-info{flex:1;min-width:0;}
+  .model-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .model-provider{font-size:11px;color:var(--dim);}
+  .model-tag{font-size:10px;padding:2px 6px;border-radius:3px;font-weight:600;}
+  .model-tag.healthy{background:#1e3a2f;color:var(--green);}
+  .model-tag.unknown{background:#2a2d1e;color:var(--yellow);}
+
+  .empty-state{color:var(--dim);font-size:13px;padding:20px;text-align:center;}
+
+  /* Error banner */
+  .error-banner{background:#2d1e1e;border:1px solid var(--red);color:var(--red);padding:10px 32px;font-size:13px;display:none;align-items:center;gap:8px;}
+  .error-banner.visible{display:flex;}
+  .error-banner .dismiss{margin-left:auto;cursor:pointer;opacity:0.7;}
+  .error-banner .dismiss:hover{opacity:1;}
+
+  /* Skeleton loading */
+  .skeleton{animation:shimmer 1.5s infinite;background:linear-gradient(90deg,var(--border) 25%,#2a2d3a 50%,var(--border) 75%);background-size:200% 100%;color:transparent !important;border-radius:4px;}
+  @keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+  @media(max-width:900px){.grid3{grid-template-columns:repeat(2,1fr);}.host-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="error-banner" id="errorBanner">
+  <span>Failed to load dashboard data</span>
+  <span id="errorMsg"></span>
+  <span class="dismiss" onclick="this.parentElement.classList.remove('visible')">&times;</span>
+</div>
+<div class="header">
+  <h1><span class="pulse" id="proxyPulse" aria-label="Proxy status indicator"></span>LiteLLM Dashboard</h1>
+  <div class="meta"><span id="lastRefresh">Loading...</span><span>Auto-refresh: 15s</span></div>
+</div>
+
+<div class="grid3" id="statsGrid" role="status" aria-live="polite">
+  <div class="stat-card"><div class="label">Proxy</div><div class="value skeleton" id="proxyStatus">-</div><div class="sub" id="proxySub">-</div></div>
+  <div class="stat-card"><div class="label">Models</div><div class="value skeleton" id="modelCount">-</div><div class="sub" id="modelBreakdown">-</div></div>
+  <div class="stat-card"><div class="label">Cache</div><div class="value skeleton" id="cacheStatus">-</div><div class="sub" id="cacheSub">-</div></div>
+</div>
+
+<div class="section" id="querySection" role="region" aria-label="Query Distribution" aria-busy="true">
+  <h2>Query Distribution <span class="badge" id="modelReqCount">0 requests</span></h2>
+  <div class="chart-container" id="queryChart"><div class="empty-state">Loading...</div></div>
+</div>
+
+<div class="section" id="cacheSection" role="region" aria-label="Cache and Infrastructure" aria-busy="true">
+  <h2>Cache & Infrastructure</h2>
+  <div class="cache-grid" id="cacheGrid"></div>
+</div>
+
+<div class="section" role="region" aria-label="Host Containers" aria-busy="true">
+  <h2>Host Containers</h2>
+  <div class="host-grid" id="hostGrid"></div>
+</div>
+
+<div class="section" role="region" aria-label="Registered Models" aria-busy="true">
+  <h2>Registered Models</h2>
+  <div class="model-grid" id="modelGrid"></div>
+</div>
+
+<script>
+const CONFIG = {
+  PROXY: '/proxy',
+  STATS: '/stats',
+  KEY: 'sk-b55922061536c9f9c19532d904871f2f9a90894e5df34b6ed73b41150c09b817',
+  REFRESH_INTERVAL: 15000,
+};
+
+function classify(name){
+  if(name.startsWith('saia/')) return{provider:'SAIA',cls:'saia'};
+  if(name.startsWith('glm-')||name.startsWith('zai-')) return{provider:'Z.ai',cls:'zai'};
+  return{provider:'Local',cls:'local'};
+}
+
+function fmtBytes(b){
+  if(b<1024)return b+' B';
+  if(b<1048576)return(b/1024).toFixed(1)+' KB';
+  if(b<1073741824)return(b/1048576).toFixed(1)+' MB';
+  return(b/1073741824).toFixed(2)+' GB';
+}
+
+function shortName(n){return n.length>28?n.substring(0,26)+'...':n;}
+
+const barColors=['c-blue','c-green','c-purple','c-yellow','c-cyan','c-dim'];
+
+async function apiFetch(url){
+  try{const r=await fetch(url,{headers:{'Authorization':'Bearer '+CONFIG.KEY}});if(!r.ok)throw r.status;return await r.json();}
+  catch(e){return null;}
+}
+
+let _firstLoad = true;
+
+async function update(){
+  try {
+  // Single combined fetch to avoid multiple slow round-trips
+  const all = await fetch(CONFIG.STATS+'/api/all').then(r=>r.json()).catch(()=>null);
+
+  // Also fetch proxy health and models directly (fast, via nginx)
+  const[t0,t1]=await Promise.all([
+    fetch(CONFIG.PROXY+'/health/liveliness').then(r=>r.ok).catch(()=>false),
+    apiFetch(CONFIG.PROXY+'/v1/models'),
+  ]);
+
+  const dockerStats = all ? {containers: all.containers || []} : {containers: []};
+  const analytics = all ? (all.analytics || {}) : {};
+
+  // Header pulse
+  document.getElementById('proxyPulse').className='pulse '+(t0?'ok':'err');
+  document.getElementById('proxyStatus').textContent=t0?'Healthy':'Down';
+  document.getElementById('proxyStatus').style.color=t0?'var(--green)':'var(--red)';
+  document.getElementById('proxySub').textContent='localhost:4000';
+
+  // Models
+  const models=(t1&&t1.data)?t1.data:[];
+  const local=models.filter(m=>classify(m.id).cls==='local').length;
+  const zai=models.filter(m=>classify(m.id).cls==='zai').length;
+  const saia=models.filter(m=>classify(m.id).cls==='saia').length;
+  document.getElementById('modelCount').textContent=models.length;
+  document.getElementById('modelBreakdown').textContent=local+' local · '+zai+' Z.ai · '+saia+' SAIA';
+
+  // Analytics
+  const cacheH=analytics.cache_health||{};
+  const globalSpend=analytics.global_spend||{};
+  const spendByModel=analytics.spend_by_model||[];
+
+  // Cache card
+  const cacheOk=cacheH.status==='healthy';
+  document.getElementById('cacheStatus').textContent=cacheOk?'Redis OK':'Error';
+  document.getElementById('cacheStatus').style.color=cacheOk?'var(--green)':'var(--red)';
+  document.getElementById('cacheSub').textContent=cacheH.redis_version?'Redis '+cacheH.redis_version:'-';
+
+  // Cache infrastructure cards
+  const cg=document.getElementById('cacheGrid');
+  cg.innerHTML=[
+    {l:'Cache Type',v:cacheH.cache_type||'none'},
+    {l:'Ping',v:cacheH.ping?'✓ OK':'✗ Fail',c:cacheH.ping?'var(--green)':'var(--red)'},
+    {l:'Write Test',v:cacheH.set_cache||'unknown'},
+    {l:'TTL',v:extractTTL(cacheH.ttl)},
+    {l:'Redis Version',v:cacheH.redis_version||'-'},
+    {l:'Proxy DB',v:t0?'PostgreSQL ✓':'Down',c:t0?'var(--green)':'var(--red)'},
+  ].map(c=>`<div class="cache-card"><div class="cl">${c.l}</div><div class="cv" style="color:${c.c||'var(--text)'}">${c.v}</div></div>`).join('');
+
+  // Query distribution chart (request counts from DB)
+  const qc=document.getElementById('queryChart');
+  if(spendByModel.length>0){
+    const sorted=spendByModel.sort((a,b)=>(b.requests||0)-(a.requests||0));
+    const maxReqs=Math.max(...sorted.map(m=>m.requests||0),1);
+    const totalReqs=sorted.reduce((s,m)=>s+(m.requests||0),0);
+    const topCount=Math.min(sorted.length,15);
+    document.getElementById('modelReqCount').textContent=totalReqs.toLocaleString()+' total requests';
+    qc.innerHTML=sorted.slice(0,topCount)
+      .map((m,i)=>{
+        const reqs=m.requests||0;
+        const pct=reqs/maxReqs*100;
+        const cls=classify(m.model);
+        const color=cls.cls==='local'?'c-green':cls.cls==='zai'?'c-blue':'c-purple';
+        const sharePct=(reqs/totalReqs*100).toFixed(1);
+        const showCount=pct>25; // show count inside bar if wide enough
+        const lat=m.avg_latency_ms||0;
+        const latCls=lat<5000?'fast':lat<15000?'medium':'slow';
+        const latLabel=lat>0?(lat<1000?Math.round(lat)+'ms':(lat/1000).toFixed(1)+'s'):'-';
+        return `<div class="bar-row">
+          <div class="bar-rank">${i+1}</div>
+          <div class="bar-label" title="${m.model}">${shortName(m.model)}</div>
+          <div class="bar-track"><div class="bar-fill ${color}" style="width:${Math.max(pct,2)}%">${showCount?reqs.toLocaleString():''}</div></div>
+          <div class="bar-meta">${!showCount?reqs.toLocaleString()+' reqs':sharePct+'%'}<span class="bar-latency ${latCls}">${latLabel}</span></div>
+        </div>`;
+      }).join('');
+  } else {
+    document.getElementById('modelReqCount').textContent='No usage data yet';
+    qc.innerHTML='<div class="empty-state">No queries tracked yet. Request data will appear here once models are used.</div>';
+  }
+
+  // Host containers
+  const hg=document.getElementById('hostGrid');
+  if(dockerStats.containers&&dockerStats.containers.length>0){
+    // Only show running containers + litellm-related
+    const show=dockerStats.containers.filter(c=>c.status==='running'||c.name.includes('litellm'));
+    hg.innerHTML=show.map(c=>{
+      const cpuPct=c.cpu_percent||0;
+      const memPct=c.mem_percent||0;
+      const cpuBar=cpuPct>80?'r':cpuPct>40?'y':'g';
+      const memBar=memPct>80?'r':memPct>40?'y':'g';
+      return `<div class="host-card">
+        <h3><span class="dot ${c.status}"></span>${c.name}</h3>
+        <div class="mr"><span class="l">CPU</span><span class="v">${cpuPct.toFixed(1)}% <span class="bar-sm"><span class="fill ${cpuBar}" style="width:${Math.min(cpuPct,100)}%"></span></span></span></div>
+        <div class="mr"><span class="l">Memory</span><span class="v">${fmtBytes(c.mem_usage)} / ${fmtBytes(c.mem_limit)} <span class="bar-sm"><span class="fill ${memBar}" style="width:${Math.min(memPct,100)}%"></span></span></span></div>
+        <div class="mr"><span class="l">Network</span><span class="v">↓${fmtBytes(c.net_rx)} ↑${fmtBytes(c.net_tx)}</span></div>
+      </div>`;
+    }).join('');
+  } else {
+    hg.innerHTML='<div class="empty-state">Loading container stats...</div>';
+  }
+
+  // Model list
+  const mg=document.getElementById('modelGrid');
+  if(models.length>0){
+    mg.innerHTML=models.map(m=>{
+      const c=classify(m.id);
+      const init=c.cls==='local'?'LC':c.cls==='zai'?'ZA':'SA';
+      return `<div class="model-card">
+        <div class="mi ${c.cls}">${init}</div>
+        <div class="model-info"><div class="model-name" title="${m.id}">${shortName(m.id)}</div><div class="model-provider">${c.provider}</div></div>
+        <span class="model-tag ${t0?'healthy':'unknown'}">${t0?'Ready':'?'}</span>
+      </div>`;
+    }).join('');
+  } else {
+    mg.innerHTML='<div class="empty-state">No models loaded</div>';
+  }
+
+  document.getElementById('lastRefresh').textContent='Updated: '+new Date().toLocaleTimeString();
+
+  if (_firstLoad) {
+    _firstLoad = false;
+    document.querySelectorAll('.skeleton').forEach(el => el.classList.remove('skeleton'));
+    document.getElementById('errorBanner').classList.remove('visible');
+  }
+  } catch(e) {
+    console.error('Dashboard update failed:', e);
+    document.getElementById('errorMsg').textContent = e.message || 'Unknown error';
+    document.getElementById('errorBanner').classList.add('visible');
+    if (_firstLoad) {
+      _firstLoad = false;
+      document.querySelectorAll('.skeleton').forEach(el => el.classList.remove('skeleton'));
+    }
+  }
+}
+
+function extractTTL(s){
+  if(!s)return '-';
+  try{const o=JSON.parse(s);return(o.ttl||'-')+'s';}catch{return '-';}
+}
+
+update();
+setInterval(update, CONFIG.REFRESH_INTERVAL);
+</script>
+</body>
+</html>

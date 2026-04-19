@@ -1,0 +1,6 @@
+FROM python:3.12-alpine
+RUN pip install --no-cache-dir psycopg2-binary
+COPY stats.py /app/stats.py
+WORKDIR /app
+EXPOSE 8000
+CMD ["python", "-u", "/app/stats.py"]
