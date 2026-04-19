@@ -110,14 +110,6 @@
       "max_completion_tokens": "max_tokens"
     }
   },
-  "saiav2": {
-    "base_url": "https://chat-ai.academiccloud.de/v2",
-    "api_key_env": "SAIA_V2_API_KEY",
-    "api_base_env": "SAIA_V2_API_BASE",
-    "param_mappings": {
-      "max_completion_tokens": "max_tokens"
-    }
-  },
   "saia": {
     "base_url": "https://chat-ai.academiccloud.de/v1",
     "api_key_env": "SAIA_API_KEY",

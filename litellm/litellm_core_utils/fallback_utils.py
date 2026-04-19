@@ -1,6 +1,8 @@
-from litellm._uuid import uuid
-from typing import Optional
+from __future__ import annotations
 
+from typing import TYPE_CHECKING, Optional
+
+from litellm._uuid import uuid
 import litellm
 from litellm._logging import verbose_logger
 from litellm.litellm_core_utils.core_helpers import (
@@ -10,8 +12,11 @@ from litellm.litellm_core_utils.core_helpers import (
 
 from .asyncify import run_async_function
 
+if TYPE_CHECKING:
+    from litellm.types.utils import ModelResponse
 
-async def async_completion_with_fallbacks(**kwargs):
+
+async def async_completion_with_fallbacks(**kwargs) -> ModelResponse:
     """
     Asynchronously attempts completion with fallback models if the primary model fails.
 
@@ -47,7 +52,7 @@ async def async_completion_with_fallbacks(**kwargs):
             completion_kwargs = safe_deep_copy(base_kwargs)
             # Handle dictionary fallback configurations
             if isinstance(fallback, dict):
-                model = fallback.pop("model", original_model)
+                model = fallback.get("model", original_model)
                 completion_kwargs.update(fallback)
             else:
                 model = fallback
@@ -65,9 +70,7 @@ async def async_completion_with_fallbacks(**kwargs):
                 return response
 
         except Exception as e:
-            verbose_logger.exception(
-                f"Fallback attempt failed for model {model}: {str(e)}"
-            )
+            verbose_logger.exception(f"Fallback attempt failed for model {model}: {str(e)}")
             most_recent_exception_str = str(e)
             continue
 

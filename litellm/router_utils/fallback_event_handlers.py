@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
 import litellm
 from litellm._logging import verbose_router_logger
@@ -27,24 +27,18 @@ def _check_stripped_model_group(model_group: str, fallback_key: str) -> bool:
     but model_group is like:
     "openai/gpt-3.5-turbo"
 
-    Returns:
-    - True if the stripped model group == fallback_key
+    Returns True if the stripped model group == fallback_key.
     """
     for provider in litellm.provider_list:
-        if isinstance(provider, Enum):
-            _provider = provider.value
-        else:
-            _provider = provider
+        _provider = provider.value if isinstance(provider, Enum) else provider
         if model_group.startswith(f"{_provider}/"):
-            stripped_model_group = model_group.replace(f"{_provider}/", "")
+            stripped_model_group = model_group.removeprefix(f"{_provider}/")
             if stripped_model_group == fallback_key:
                 return True
     return False
 
 
-def get_fallback_model_group(
-    fallbacks: List[Any], model_group: str
-) -> Tuple[Optional[List[str]], Optional[int]]:
+def get_fallback_model_group(fallbacks: List[Any], model_group: str) -> Tuple[Optional[List[str]], Optional[int]]:
     """
     Returns:
     - fallback_model_group: List[str] of fallback model groups. example: ["gpt-4", "gpt-3.5-turbo"]
@@ -61,17 +55,16 @@ def get_fallback_model_group(
     ## check for specific model group-specific fallbacks
     for idx, item in enumerate(fallbacks):
         if isinstance(item, dict):
-            if list(item.keys())[0] == model_group:  # check exact match
+            item_key = list(item.keys())[0]
+            if item_key == model_group:  # check exact match
                 fallback_model_group = item[model_group]
                 break
-            elif _check_stripped_model_group(
-                model_group=model_group, fallback_key=list(item.keys())[0]
-            ):  # check generic fallback
-                stripped_model_fallback = item[list(item.keys())[0]]
-            elif list(item.keys())[0] == "*":  # check generic fallback
+            elif _check_stripped_model_group(model_group=model_group, fallback_key=item_key):  # check stripped match
+                stripped_model_fallback = item[item_key]
+            elif item_key == "*":  # check generic fallback
                 generic_fallback_idx = idx
         elif isinstance(item, str):
-            fallback_model_group = [fallbacks.pop(idx)]  # returns single-item list
+            fallback_model_group = [item]
     ## if none, check for generic fallback
     if fallback_model_group is None:
         if stripped_model_fallback is not None:
@@ -136,9 +129,7 @@ async def run_async_fallback(
             fallback_depth = fallback_depth + 1
             kwargs["fallback_depth"] = fallback_depth
             kwargs["max_fallbacks"] = max_fallbacks
-            response = await litellm_router.async_function_with_fallbacks(
-                *args, **kwargs
-            )
+            response = await litellm_router.async_function_with_fallbacks(*args, **kwargs)
             verbose_router_logger.info("Successful fallback b/w models.")
             response = add_fallback_headers_to_response(
                 response=response,
@@ -161,72 +152,33 @@ async def run_async_fallback(
     raise error_from_fallbacks
 
 
-async def log_success_fallback_event(
-    original_model_group: str, kwargs: dict, original_exception: Exception
+async def _log_fallback_event(
+    original_model_group: str,
+    kwargs: dict,
+    original_exception: Exception,
+    event_type: str,
 ):
-    """
-    Log a successful fallback event to all registered callbacks.
-
-    Uses LoggingCallbackManager.get_custom_loggers_for_type() to get deduplicated
-    CustomLogger instances from all callback lists.
-
-    Args:
-        original_model_group (str): The original model group before fallback.
-        kwargs (dict): kwargs for the request
-
-    Note:
-        Errors during logging are caught and reported but do not interrupt the process.
-    """
-    # Get deduplicated CustomLogger instances from all callback lists
-    custom_loggers = litellm.logging_callback_manager.get_custom_loggers_for_type(
-        CustomLogger
-    )
+    custom_loggers = litellm.logging_callback_manager.get_custom_loggers_for_type(CustomLogger)
+    log_method = "log_success_fallback_event" if event_type == "success" else "log_failure_fallback_event"
 
     for _callback_custom_logger in custom_loggers:
         try:
-            await _callback_custom_logger.log_success_fallback_event(
+            log_fn = getattr(_callback_custom_logger, log_method)
+            await log_fn(
                 original_model_group=original_model_group,
                 kwargs=kwargs,
                 original_exception=original_exception,
             )
         except Exception as e:
-            verbose_router_logger.error(
-                f"Error in log_success_fallback_event: {str(e)}"
-            )
+            verbose_router_logger.error(f"Error in {log_method}: {str(e)}")
 
 
-async def log_failure_fallback_event(
-    original_model_group: str, kwargs: dict, original_exception: Exception
-):
-    """
-    Log a failed fallback event to all registered callbacks.
+async def log_success_fallback_event(original_model_group: str, kwargs: dict, original_exception: Exception):
+    await _log_fallback_event(original_model_group, kwargs, original_exception, "success")
 
-    Uses LoggingCallbackManager.get_custom_loggers_for_type() to get deduplicated
-    CustomLogger instances from all callback lists.
 
-    Args:
-        original_model_group (str): The original model group before fallback.
-        kwargs (dict): kwargs for the request
-
-    Note:
-        Errors during logging are caught and reported but do not interrupt the process.
-    """
-    # Get deduplicated CustomLogger instances from all callback lists
-    custom_loggers = litellm.logging_callback_manager.get_custom_loggers_for_type(
-        CustomLogger
-    )
-
-    for _callback_custom_logger in custom_loggers:
-        try:
-            await _callback_custom_logger.log_failure_fallback_event(
-                original_model_group=original_model_group,
-                kwargs=kwargs,
-                original_exception=original_exception,
-            )
-        except Exception as e:
-            verbose_router_logger.error(
-                f"Error in log_failure_fallback_event: {str(e)}"
-            )
+async def log_failure_fallback_event(original_model_group: str, kwargs: dict, original_exception: Exception):
+    await _log_fallback_event(original_model_group, kwargs, original_exception, "failure")
 
 
 def _check_non_standard_fallback_format(fallbacks: Optional[List[Any]]) -> bool:
@@ -249,9 +201,3 @@ def _check_non_standard_fallback_format(fallbacks: Optional[List[Any]]) -> bool:
                 return True
 
     return False
-
-
-def run_non_standard_fallback_format(
-    fallbacks: Union[List[str], List[Dict[str, Any]]], model_group: str
-):
-    pass
