@@ -323,66 +323,71 @@ def fetch_container_stats() -> list[dict[str, Any]]:
         List of dicts with keys: name, status, image, cpu_percent,
         mem_usage, mem_limit, mem_percent, net_rx, net_tx.
     """
-    containers = _docker_api_get("/containers/json?all=false")
-    if not containers:
-        logger.info("No containers returned from Docker API")
-        return []
+    try:
+        from safe_stats import get_container_stats_safely
+        return get_container_stats_safely()
+    except ImportError:
+        logger.warning("safe_stats not available, falling back to Docker socket")
+        containers = _docker_api_get("/containers/json?all=false")
+        if not containers:
+            logger.info("No containers returned from Docker API")
+            return []
 
-    results: list[Optional[Any]] = [None] * len(containers)
+        results: list[Optional[Any]] = [None] * len(containers)
 
-    def _fetch_one(idx: int, cid: str) -> None:
-        results[idx] = _docker_api_get(f"/containers/{cid}/stats?stream=false")
+        def _fetch_one(idx: int, cid: str) -> None:
+            results[idx] = _docker_api_get(f"/containers/{cid}/stats?stream=false")
 
-    threads: list[threading.Thread] = []
-    for i, c in enumerate(containers):
-        if c.get("State") == "running":
-            t = threading.Thread(target=_fetch_one, args=(i, c["Id"]))
-            t.start()
-            threads.append(t)
+        threads: list[threading.Thread] = []
+        for i, c in enumerate(containers):
+            if c.get("State") == "running":
+                t = threading.Thread(target=_fetch_one, args=(i, c["Id"]))
+                t.start()
+                threads.append(t)
 
-    for t in threads:
-        t.join(timeout=REQUEST_TIMEOUT)
+        for t in threads:
+            t.join(timeout=REQUEST_TIMEOUT)
 
-    out: list[dict[str, Any]] = []
-    for i, c in enumerate(containers):
-        name = c.get("Names", [""])[0].lstrip("/")
-        entry: dict[str, Any] = {
-            "name": name,
-            "status": c.get("State", "unknown"),
-            "image": c.get("Image", ""),
-            "cpu_percent": 0.0,
-            "mem_usage": 0,
-            "mem_limit": 0,
-            "mem_percent": 0.0,
-            "net_rx": 0,
-            "net_tx": 0,
-        }
-        stats = results[i]
-        if stats:
-            try:
-                cpu_delta = (
-                    stats["cpu_stats"]["cpu_usage"]["total_usage"] - stats["precpu_stats"]["cpu_usage"]["total_usage"]
-                )
-                sys_delta = stats["cpu_stats"]["system_cpu_usage"] - stats["precpu_stats"]["system_cpu_usage"]
-                online_cpus = stats["cpu_stats"].get("online_cpus", 1)
-                if sys_delta > 0:
-                    entry["cpu_percent"] = round((cpu_delta / sys_delta) * online_cpus * 100, 1)
+        out: list[dict[str, Any]] = []
+        for i, c in enumerate(containers):
+            name = c.get("Names", [""])[0].lstrip("/")
+            entry: dict[str, Any] = {
+                "name": name,
+                "status": c.get("State", "unknown"),
+                "image": c.get("Image", ""),
+                "cpu_percent": 0.0,
+                "mem_usage": 0,
+                "mem_limit": 0,
+                "mem_percent": 0.0,
+                "net_rx": 0,
+                "net_tx": 0,
+            }
+            stats = results[i]
+            if stats:
+                try:
+                    cpu_delta = (
+                        stats["cpu_stats"]["cpu_usage"]["total_usage"] - stats["precpu_stats"]["cpu_usage"]["total_usage"]
+                    )
+                    sys_delta = stats["cpu_stats"]["system_cpu_usage"] - stats["precpu_stats"]["system_cpu_usage"]
+                    online_cpus = stats["cpu_stats"].get("online_cpus", 1)
+                    if sys_delta > 0:
+                        entry["cpu_percent"] = round((cpu_delta / sys_delta) * online_cpus * 100, 1)
 
-                mem_stats = stats.get("memory_stats", {})
-                mu = mem_stats.get("usage", 0)
-                ml = mem_stats.get("limit", 0)
-                entry["mem_usage"] = mu
-                entry["mem_limit"] = ml
-                entry["mem_percent"] = round(mu / ml * 100, 1) if ml > 0 else 0.0
+                    mem_stats = stats.get("memory_stats", {})
+                    mu = mem_stats.get("usage", 0)
+                    ml = mem_stats.get("limit", 0)
+                    entry["mem_usage"] = mu
+                    entry["mem_limit"] = ml
+                    entry["mem_percent"] = round(mu / ml * 100, 1) if ml > 0 else 0.0
 
-                networks = stats.get("networks", {})
-                for iface_data in networks.values():
-                    entry["net_rx"] += iface_data.get("rx_bytes", 0)
-                    entry["net_tx"] += iface_data.get("tx_bytes", 0)
-            except (KeyError, TypeError, ZeroDivisionError) as e:
-                logger.debug("Failed to parse stats for %s: %s", name, e)
-        out.append(entry)
-    return out
+                    networks = stats.get("networks", {})
+                    for iface_data in networks.values():
+                        entry["net_rx"] += iface_data.get("rx_bytes", 0)
+                        entry["net_tx"] += iface_data.get("tx_bytes", 0)
+                except (KeyError, TypeError, ZeroDivisionError) as e:
+                    logger.debug("Failed to parse stats for %s: %s", name, e)
+            out.append(entry)
+        return out
 
 
 def _query_request_counts() -> list[dict[str, Any]]:
@@ -713,6 +718,7 @@ if __name__ == "__main__":
     _cache.register("/api/docker-stats", fetch_container_stats)
     _cache.register("/api/litellm-analytics", fetch_litellm_analytics)
     _cache.register("/api/all", fetch_combined)
+    _cache.register("/api/health", fetch_litellm_analytics)
     _cache.start()
 
     server = _ThreadedServer(("0.0.0.0", LISTEN_PORT), _Handler)

@@ -2,7 +2,19 @@
 OpenAI-like chat completion transformation
 """
 
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    AsyncIterator,
+    Coroutine,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+    overload,
+)
 
 import httpx
 
@@ -21,6 +33,65 @@ else:
 
 
 class OpenAILikeChatConfig(OpenAIGPTConfig):
+    @overload
+    def _transform_messages(
+        self, messages: List[AllMessageValues], model: str, is_async: Literal[True]
+    ) -> Coroutine[Any, Any, List[AllMessageValues]]:
+        ...
+
+    @overload
+    def _transform_messages(
+        self,
+        messages: List[AllMessageValues],
+        model: str,
+        is_async: Literal[False] = False,
+    ) -> List[AllMessageValues]:
+        ...
+
+    def _transform_messages(
+        self, messages: List[AllMessageValues], model: str, is_async: bool = False
+    ) -> Union[List[AllMessageValues], Coroutine[Any, Any, List[AllMessageValues]]]:
+        """
+        Transform messages for OpenAI-like providers.
+        
+        Moves system messages to the beginning to support providers that require
+        system messages to only appear at the start (e.g., some Qwen deployments).
+        """
+        # Call parent transformation first
+        transformed = super()._transform_messages(messages, model, is_async)
+        
+        if is_async and hasattr(transformed, "__await__"):
+            # For async, we need to await the result
+            async def _async_reorder():
+                result = await transformed  # type: ignore
+                return self._reorder_system_messages(result)
+            return _async_reorder()
+        return self._reorder_system_messages(transformed)  # type: ignore
+    
+    @staticmethod
+    def _reorder_system_messages(messages: List[AllMessageValues]) -> List[AllMessageValues]:
+        """
+        Move all system messages to the beginning of the message list.
+        
+        This handles providers that require system messages to only appear at
+        the start of the conversation (e.g., some Qwen deployments).
+        
+        System messages are moved to the front while preserving their relative order.
+        Non-system messages retain their relative order after all system messages.
+        """
+        system_messages = []
+        other_messages = []
+        
+        for message in messages:
+            role = message.get("role")
+            if role == "system":
+                system_messages.append(message)
+            else:
+                other_messages.append(message)
+        
+        # Concatenate system messages first, then other messages
+        return system_messages + other_messages
+    
     def _get_openai_compatible_provider_info(
         self,
         api_base: Optional[str],

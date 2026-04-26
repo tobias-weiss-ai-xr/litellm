@@ -5396,7 +5396,7 @@ class Router:
             # add the available fallbacks to the exception
             original_exception.message += ". Received Model Group={}\nAvailable Model Group Fallbacks={}".format(  # type: ignore
                 model_group,
-                fallback_model_group,
+                fallbacks,
             )
             if len(fallback_failure_exception_str) > 0:
                 original_exception.message += (  # type: ignore
