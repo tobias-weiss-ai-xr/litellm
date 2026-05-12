@@ -1,6 +1,3 @@
-#include README for successful build
-!README.md
-
 # Version control
 .git
 .gitignore
@@ -15,13 +12,10 @@ htmlcov/
 # Documentation
 docs/
 *.md
+#include README for successful build
+!README.md
 LICENSE
 
-# UI (not needed in proxy image)
-ui/
-
-# Enterprise
-enterprise/
 
 # CI/CD
 .circleci/
