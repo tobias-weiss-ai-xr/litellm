@@ -1,3 +1,6 @@
+#include README for successful build
+!README.md
+
 # Version control
 .git
 .gitignore

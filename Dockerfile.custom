@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . .
-RUN pip install --no-cache-dir -e ".[proxy]" && \
+RUN pip install --no-cache-dir ".[proxy]" && \
     pip install --no-cache-dir prisma==0.11.0 && \
     pip install --no-cache-dir gunicorn
 
