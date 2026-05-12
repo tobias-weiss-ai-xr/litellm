@@ -61,7 +61,7 @@ model_list:
 
   - model_name: MiniMax-M2.7-AWQ-4bit
     litellm_params:
-      model: openai/cyankiwi/MiniMax-M2.7-AWQ-4bit
+      model: openai/MiniMax-M2.7-AWQ-4bit
       api_key: none
       api_base: http://10.200.0.1:4000/v1
 
@@ -73,7 +73,6 @@ model_list:
 
 router_settings:
   fallbacks:
-    - { "saia/mistral-large-3-675b": ["saia/glm-4.7"] }
   num_retries: 3
   allowed_fails: 3
   cooldown_time: 30
