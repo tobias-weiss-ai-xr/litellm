@@ -1,0 +1,141 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  litellm-postgres:
+    image: postgres:16-alpine
+    container_name: litellm-postgres
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      POSTGRES_DB: litellm
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: litellm
+    volumes:
+      - litellm-pgdata:/var/lib/postgresql/data
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c effective_cache_size=512MB
+      -c work_mem=16MB
+      -c maintenance_work_mem=64MB
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c max_connections=20
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+          cpus: "2.0"
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litellm -d litellm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - litellm-net
+
+  litellm-redis:
+    image: redis:7-alpine
+    container_name: litellm-redis
+    restart: unless-stopped
+    logging: *default-logging
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-litellm}
+      --maxmemory 3gb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - litellm-redisdata:/data
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+          cpus: "0.5"
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-litellm}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - litellm-net
+
+  litellm-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.custom
+    image: litellm-opencode:latest
+    container_name: litellm-proxy
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      litellm-postgres:
+        condition: service_healthy
+      litellm-redis:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./litellm_proxy_config.yaml:/app/config.yaml:ro
+    environment:
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
+      - DATABASE_URL=postgresql://litellm:litellm@litellm-postgres:5432/litellm
+      - REDIS_HOST=litellm-redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-litellm}
+      - SAIA_API_KEY=${SAIA_API_KEY}
+      - SAIA_API_BASE=${SAIA_API_BASE:-https://chat-ai.academiccloud.de/v1}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    env-file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      [
+        "--config",
+        "/app/config.yaml",
+        "--port",
+        "4000",
+        "--num_workers",
+        "2",
+        "--run_gunicorn",
+        "--telemetry",
+        "true",
+      ]
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "4.0"
+        reservations:
+          memory: 1G
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - litellm-net
+
+networks:
+  litellm-net:
+    driver: bridge
+
+volumes:
+  litellm-pgdata:
+  litellm-redisdata:
