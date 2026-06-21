@@ -1,4 +1,21 @@
 model_list:
+  # === Tier defaults (OpenCode Zen free) ===
+  - model_name: high
+    litellm_params:
+      model: openai/big-pickle
+      api_base: https://opencode.ai/zen/v1
+
+  - model_name: mid
+    litellm_params:
+      model: openai/deepseek-v4-flash-free
+      api_base: https://opencode.ai/zen/v1
+
+  - model_name: low
+    litellm_params:
+      model: openai/nemotron-3-super-free
+      api_base: https://opencode.ai/zen/v1
+
+  # === SAIA (chat-ai.academiccloud.de) ===
   - model_name: saia/mistral-large-3-675b
     litellm_params:
       model: openai/mistral-large-3-675b-instruct-2512
@@ -11,68 +28,221 @@ model_list:
       api_key: os.environ/SAIA_API_KEY
       api_base: https://chat-ai.academiccloud.de/v1
 
-  - model_name: saia/qwen3-235b-a22b
-    litellm_params:
-      model: openai/qwen3-235b-a22b
-      api_key: os.environ/SAIA_API_KEY
-      api_base: https://chat-ai.academiccloud.de/v1
-
   - model_name: saia/qwen3.5-397b-a17b
     litellm_params:
-      model: openai/Qwen3.5-397B-A17B-GPTQ-Int4
+      model: openai/qwen3.5-397b-a17b
       api_key: os.environ/SAIA_API_KEY
       api_base: https://chat-ai.academiccloud.de/v1
 
   - model_name: saia/qwen3.5-122b-a10b
     litellm_params:
-      model: openai/Qwen3.5-122B-A10B-GPTQ-Int4
+      model: openai/qwen3.5-122b-a10b
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  - model_name: saia/qwen3.5-35b-a3b
+    litellm_params:
+      model: openai/qwen3.5-35b-a3b
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  - model_name: saia/qwen3.5-27b
+    litellm_params:
+      model: openai/qwen3.5-27b
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  - model_name: saia/qwen3.6-35b-a3b
+    litellm_params:
+      model: openai/qwen3.6-35b-a3b
       api_key: os.environ/SAIA_API_KEY
       api_base: https://chat-ai.academiccloud.de/v1
 
   - model_name: saia/devstral-2-123b-instruct-2512
     litellm_params:
-      model: openai/Devstral-2-123B-Instruct-2512
+      model: openai/devstral-2-123b-instruct-2512
       api_key: os.environ/SAIA_API_KEY
       api_base: https://chat-ai.academiccloud.de/v1
 
-  - model_name: saia/internvl-3.5-30b-a3b
+  - model_name: saia/qwen3-coder-30b-a3b-instruct
     litellm_params:
-      model: openai/InternVL3_5-30B-A3B-HF
+      model: openai/qwen3-coder-30b-a3b-instruct
       api_key: os.environ/SAIA_API_KEY
       api_base: https://chat-ai.academiccloud.de/v1
 
-  - model_name: qwen3.5-9b-81
+  - model_name: saia/llama-3.3-70b-instruct
     litellm_params:
-      model: openai/qwen3.5-9b-q4_k_m.gguf
-      api_key: none
-      api_base: http://192.168.0.81:8080/v1
+      model: openai/llama-3.3-70b-instruct
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
 
-  - model_name: qwen3.6-35b
+  - model_name: saia/deepseek-r1-distill-llama-70b
     litellm_params:
-      model: openai/qwen3.6-35b
-      api_key: none
+      model: openai/deepseek-r1-distill-llama-70b
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  - model_name: saia/openai-gpt-oss-120b
+    litellm_params:
+      model: openai/openai-gpt-oss-120b
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  - model_name: saia/apertus-70b-instruct-2509
+    litellm_params:
+      model: openai/apertus-70b-instruct-2509
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  - model_name: saia/gemma-3-27b-instruct
+    litellm_params:
+      model: openai/gemma-3-27b-it
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  - model_name: saia/gemma-4-31b-it
+    litellm_params:
+      model: openai/gemma-4-31b-it
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  - model_name: saia/teuken-7b-instruct-research
+    litellm_params:
+      model: openai/teuken-7b-instruct-research
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  - model_name: saia/medgemma-27b-instruct
+    litellm_params:
+      model: openai/medgemma-27b-it
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  - model_name: saia/llama-3.1-8b-instruct
+    litellm_params:
+      model: openai/meta-llama-3.1-8b-instruct
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  - model_name: saia/internvl3.5-30b-a3b
+    litellm_params:
+      model: openai/internvl3.5-30b-a3b
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  - model_name: saia/qwen3-30b-a3b-instruct-2507
+    litellm_params:
+      model: openai/qwen3-30b-a3b-instruct-2507
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  - model_name: saia/qwen3-omni-30b-a3b-instruct
+    litellm_params:
+      model: openai/qwen3-omni-30b-a3b-instruct
+      api_key: os.environ/SAIA_API_KEY
+      api_base: https://chat-ai.academiccloud.de/v1
+
+  # === OpenCode Go (OpenAI-compatible models) ===
+  - model_name: opencode-go/glm-5.1
+    litellm_params:
+      model: openai/glm-5.1
+      api_key: os.environ/OPENCODE_GO_API_KEY
+      api_base: https://opencode.ai/zen/go/v1
+
+  - model_name: opencode-go/glm-5
+    litellm_params:
+      model: openai/glm-5
+      api_key: os.environ/OPENCODE_GO_API_KEY
+      api_base: https://opencode.ai/zen/go/v1
+
+  - model_name: opencode-go/kimi-k2.5
+    litellm_params:
+      model: openai/kimi-k2.5
+      api_key: os.environ/OPENCODE_GO_API_KEY
+      api_base: https://opencode.ai/zen/go/v1
+
+  - model_name: opencode-go/kimi-k2.6
+    litellm_params:
+      model: openai/kimi-k2.6
+      api_key: os.environ/OPENCODE_GO_API_KEY
+      api_base: https://opencode.ai/zen/go/v1
+
+  - model_name: opencode-go/deepseek-v4-pro
+    litellm_params:
+      model: openai/deepseek-v4-pro
+      api_key: os.environ/OPENCODE_GO_API_KEY
+      api_base: https://opencode.ai/zen/go/v1
+
+  - model_name: opencode-go/deepseek-v4-flash
+    litellm_params:
+      model: openai/deepseek-v4-flash
+      api_key: os.environ/OPENCODE_GO_API_KEY
+      api_base: https://opencode.ai/zen/go/v1
+
+  - model_name: opencode-go/mimo-v2.5
+    litellm_params:
+      model: openai/mimo-v2.5
+      api_key: os.environ/OPENCODE_GO_API_KEY
+      api_base: https://opencode.ai/zen/go/v1
+
+  - model_name: opencode-go/mimo-v2.5-pro
+    litellm_params:
+      model: openai/mimo-v2.5-pro
+      api_key: os.environ/OPENCODE_GO_API_KEY
+      api_base: https://opencode.ai/zen/go/v1
+
+  # === OpenCode Go (Anthropic-compatible models) ===
+  - model_name: opencode-go/minimax-m2.7
+    litellm_params:
+      model: anthropic/minimax-m2.7
+      api_key: os.environ/OPENCODE_GO_API_KEY
+      api_base: https://opencode.ai/zen/go/v1
+
+  - model_name: opencode-go/minimax-m2.5
+    litellm_params:
+      model: anthropic/minimax-m2.5
+      api_key: os.environ/OPENCODE_GO_API_KEY
+      api_base: https://opencode.ai/zen/go/v1
+
+  - model_name: opencode-go/qwen3.6-plus
+    litellm_params:
+      model: anthropic/qwen3.6-plus
+      api_key: os.environ/OPENCODE_GO_API_KEY
+      api_base: https://opencode.ai/zen/go/v1
+
+  - model_name: opencode-go/qwen3.5-plus
+    litellm_params:
+      model: anthropic/qwen3.5-plus
+      api_key: os.environ/OPENCODE_GO_API_KEY
+      api_base: https://opencode.ai/zen/go/v1
+
+  # === Local models ===
+  - model_name: local/deepseek-v4-flash
+    litellm_params:
+      model: openai/deepseek-v4-flash
       api_base: http://192.168.0.27:8000/v1
-
-  - model_name: qwen3.6-35b
-    litellm_params:
-      model: openai/qwen3.6-35b
       api_key: none
-      api_base: http://192.168.0.176:8000/v1
 
-  - model_name: MiniMax-M2.7-AWQ-4bit
+  # Qwen2.5-VL-7B on Windows (vision, fast exploration)
+  - model_name: qwen2.5-vl-7b
     litellm_params:
-      model: openai/cyankiwi/MiniMax-M2.7-AWQ-4bit
-      api_key: os.environ/LITELLM_MASTER_KEY
-      api_base: http://192.168.0.27:8000/v1
-
-  - model_name: gemma-4
-    litellm_params:
-      model: openai/google_gemma-4-26B-A4B-it-Q4_K_M.gguf
-      api_key: not-needed
-      api_base: http://host.docker.internal:8080/v1
+      model: openai/Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf
+      api_base: http://192.168.0.149:8080/v1
+      api_key: none
+      timeout: 120
+      stream_timeout: 60
 
 router_settings:
-  fallbacks:
   num_retries: 3
   allowed_fails: 3
   cooldown_time: 30
+  fallbacks:
+    - high:
+        - saia/llama-3.3-70b-instruct
+        - opencode-go/deepseek-v4-pro
+    - mid:
+        - saia/qwen3.5-27b
+        - opencode-go/glm-5.1
+    - low:
+        - saia/llama-3.1-8b-instruct
+        - opencode-go/glm-5
