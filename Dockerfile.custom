@@ -1,20 +1,26 @@
 FROM python:3.11-slim
 
+ARG REPO_URL=https://github.com/tobias-weiss-ai-xr/litellm.git
+ARG BRANCH=ce-size-limiting
+
 WORKDIR /app
 
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc g++ libffi-dev curl \
+    git \
+    libatomic1 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY . .
-RUN pip install --no-cache-dir ".[proxy]" && \
-    pip install --no-cache-dir prisma==0.11.0 && \
-    pip install --no-cache-dir gunicorn
+# Clone the custom LiteLLM fork
+RUN git clone --depth 1 --branch ${BRANCH} \
+    ${REPO_URL} /app/litellm-src
 
-# Generate Prisma client (required for database operations)
-RUN cd /app && python3 -m prisma generate --schema litellm/proxy/schema.prisma
+WORKDIR /app/litellm-src
 
-EXPOSE 4000
+# Install LiteLLM with proxy extras and pin prisma
+RUN pip install --no-cache-dir .[proxy] 'prisma==0.11.0' 'prometheus-client'
+
+# Generate Prisma client
+RUN prisma generate
 
 ENTRYPOINT ["litellm"]
-CMD ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "2", "--gunicorn"]

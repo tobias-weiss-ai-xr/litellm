@@ -133,5 +133,21 @@
     "param_mappings": {
       "max_completion_tokens": "max_tokens"
     }
+  },
+  "opencode-zen": {
+    "base_url": "https://opencode.ai/zen/v1",
+    "api_key_env": "OPENCODE_API_KEY",
+    "api_base_env": "OPENCODE_API_BASE",
+    "param_mappings": {
+      "max_completion_tokens": "max_tokens"
+    }
+  },
+  "opencode-go": {
+    "base_url": "https://opencode.ai/zen/go/v1",
+    "api_key_env": "OPENCODE_GO_API_KEY",
+    "api_base_env": "OPENCODE_GO_API_BASE",
+    "param_mappings": {
+      "max_completion_tokens": "max_tokens"
+    }
   }
 }

@@ -723,6 +723,8 @@ openai_compatible_endpoints: List = [
     "https://ai-gateway.vercel.sh/v1",
     "https://api.inference.wandb.ai/v1",
     "https://api.clarifai.com/v2/ext/openai/v1",
+    "https://opencode.ai/zen/v1",
+    "https://opencode.ai/zen/go/v1",
 ]
 
 
@@ -781,6 +783,8 @@ openai_compatible_providers: List = [
     "clarifai",
     "docker_model_runner",
     "ragflow",
+    "opencode-zen",
+    "opencode-go",
 ]
 openai_text_completion_compatible_providers: List = (
     [  # providers that support `/v1/completions`
